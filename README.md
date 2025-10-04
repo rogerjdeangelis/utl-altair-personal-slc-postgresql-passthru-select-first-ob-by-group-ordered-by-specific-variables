@@ -1,2 +1,816 @@
 # utl-altair-personal-slc-postgresql-passthru-select-first-ob-by-group-ordered-by-specific-variables
 Altair personal slc postgresql select the first ob in each group ordered by specific variables
+    %let pgm=utl-altair-personal-slc-postgresql-passthru-select-first-ob-by-group-ordered-by-specific-variables;
+
+    %stop_submission;
+
+    Altair personal slc postgresql select the first ob in each group ordered by specific variables
+
+    Too long to post on a listserve, see github
+
+    github
+    https://github.com/rogerjdeangelis/utl-altair-personal-slc-postgresql-passthru-select-first-ob-by-group-ordered-by-specific-variables
+
+    Atemplate for
+
+        THREE SOLUTION
+
+             1 personal postgresql slc passthru
+             2 r sqlite
+             3 python sqlite
+
+    ANY DATABASE WITH AN ODBC DRIVER
+
+
+    SLC ENGINES
+
+      ACCESS
+      DB2
+      EXCEL
+      XLSX
+      HADOOP
+      INFORMIX
+      MariaDB
+      MySQL
+      NETEZZA
+      ODBC
+      OLEDB
+      Oracle
+      POSTGRESQL
+      SAPHANA
+      SNOWFLAKE
+      SQLSERVER
+      Sybase
+      Sybase IQ
+      TERADATA
+
+    communities.sas
+    https://communities.sas.com/t5/SAS-Programming/How-to-select-the-first-observation-in-each-group-ordered-by/m-p/702524#M215179
+
+    PROBLEM: Select the youngest by sex
+
+        Obs    NAME        SEX         AGE   SELECT THE YOINGEST
+
+         1     Alfred      M            14
+         2     Alice       F            11-> youngest female
+         3     Barbara     F            15
+         4     Carol       F            17
+         5     Henry       M            12-> youngest male
+         6     James       M            18
+
+    /*       _                        _                                           _   _
+    / |  ___| | ___   _ __   ___  ___| |_ __ _ _ __ ___  ___  _ __   __ _ ___ ___| |_| |__  _ __ _   _
+    | | / __| |/ __| | `_ \ / _ \/ __| __/ _` | `__/ _ \/ __|| `_ \ / _` / __/ __| __| `_ \| `__| | | |
+    | | \__ \ | (__  | |_) | (_) \__ \ || (_| | | |  __/\__ \| |_) | (_| \__ \__ \ |_| | | | |  | |_| |
+    |_| |___/_|\___| | .__/ \___/|___/\__\__, |_|  \___||___/| .__/ \__,_|___/___/\__|_| |_|_|   \__,_|
+                     |_|                 |___/               |_|
+    */
+
+    %utlfkil(%sysfunc(pathname(WPSWBHTM))); /*-- disable precode --*/
+    &_init_;
+
+    /*--- CREATE POSTGRESQL TABLE CLASSAGE ---*/
+
+    libname psdb postgres
+      database="template1"
+      server="localhost"
+      port=5432
+      user="postgres"
+      password="xxxxxxxx"
+      preserve_tab_names=YES
+    ;
+
+    proc datasets lib=psdb;
+      delete classage;
+    run;quit;
+
+    * LOG: NOTE: DELETING "MYDB.CLASSAGE" (MEMTYPE="DATA") <postgresql table>;
+
+    data psdb.classage;
+      input
+        name$
+        sex$ age;
+    cards4;
+    Alfred  M 14
+    Alice   F 11
+    Barbara F 15
+    Carol   F 17
+    Henry   M 12
+    James   M 18
+    ;;;;
+    run;quit;
+
+    proc print data=psdb.classage;
+    run;
+
+    /*---
+    Altair SLC
+
+    Obs    NAME        SEX         AGE
+
+     1     Alfred      M            14
+     2     Alice       F            11
+     3     Barbara     F            15
+     4     Carol       F            17
+     5     Henry       M            12
+     6     James       M            18
+    ---*/
+
+    /*--- FOR TESTING DELETE OUTPUT SAS DATASET IN CASE YOU RERUN ----*/
+    proc datasets lib=work;
+     delete ps_classage;
+    run;quit;
+
+    /*--- SELECT YOUNGEST BY SEX USING PASSTHRU TO POSTGRESL ---*/
+    proc sql;
+       connect to postgresql (
+          database="template1"
+          server="localhost"
+          port=5432
+          user="postgres"
+          password="xxxxxxxx"
+          preserve_tab_names=YES
+       );
+
+       create table ps_classage as
+       select * from connection to postgresql (
+          select * from (
+             select
+                row_number() over (partition by SEX order by AGE) as rank,
+                *
+             from classage
+          ) as ranked
+          where rank = 1
+       );
+
+       disconnect from postgresql;
+    quit;
+
+    proc print data=ps_classage;
+    run;quit;
+
+    /*--- YOUNGEST BY SEX ---*/
+
+    /*---
+    Altair SLC
+
+    Obs RANK    NAME   SEX  AGE
+
+     1     1    Alice  F     11  youngest
+     2     1    Henry  M     12  youngest
+    ---*/
+
+    /*
+    | | ___   __ _
+    | |/ _ \ / _` |
+    | | (_) | (_| |
+    |_|\___/ \__, |
+             |___/
+    */
+
+    291      ODS _ALL_ CLOSE;
+    3292      FILENAME WPSWBHTM TEMP;
+    NOTE: Writing HTML(WBHTML) BODY file d:\wpswrk\_TD9416\#LN00093
+    3293      ODS HTML(ID=WBHTML) BODY=WPSWBHTM GPATH="d:\wpswrk\_TD9416";
+    3294      %utlfkil(%sysfunc(pathname(WPSWBHTM))); /*-- disable precode --*/
+    3295      &_init_;
+    3296
+    3297      /*--- CREATE POSTGRESQL TABLE CLASSAGE ---*/
+    3298
+    3299      libname psdb postgres
+    3300        database="template1"
+    3301        server="localhost"
+    3302        port=5432
+    3303        user="postgres"
+    3304        password=XXXXXXXXXX
+    NOTE: Library psdb assigned as follows:
+          Engine:        POSTGRESQL
+          Physical Name: localhost
+
+    3305        preserve_tab_names=YES
+    3306      ;
+    Altair SLC
+
+    The DATASETS Procedure
+
+         Directory
+
+    Libref    PSDB
+    Engine    POSTGRESQL
+
+                  Members
+
+                                 Member
+      Number    Member Name      Type
+
+    -----------------------------------
+
+           1    EXAMPLE_TABLE    DATA
+    3307
+    3308      proc datasets lib=psdb;
+    3309        delete classage;
+    3310      run;quit;
+    NOTE: PSDB.CLASSAGE (memtype="DATA") was not found, and has not been deleted
+    NOTE: Procedure datasets step took :
+          real time : 0.093
+          cpu time  : 0.031
+
+
+    3311
+    3312      * LOG: NOTE: DELETING "MYDB.CLASSAGE" (MEMTYPE="DATA") <postgresql table>;
+    3313
+    3314      data psdb.classage;
+    3315        input
+    3316          name$
+    3317          sex$ age;
+    3318      cards4;
+
+    NOTE: Data set "PSDB.classage" has an unknown number of observation(s) and 3 variable(s)
+    NOTE: The data step took :
+          real time : 0.050
+          cpu time  : 0.000
+
+
+    3319      Alfred  M 14
+    3320      Alice   F 11
+    3321      Barbara F 15
+    3322      Carol   F 17
+    3323      Henry   M 12
+    3324      James   M 18
+    3325      ;;;;
+    3326      run;quit;
+    3327
+    3328      proc print data=psdb.classage;
+    3329      run;
+    NOTE: 6 observations were read from "PSDB.classage"
+    NOTE: Procedure print step took :
+          real time : 0.007
+          cpu time  : 0.015
+
+
+    Altair SLC
+
+    The DATASETS Procedure
+
+                Directory
+
+    Libref           WORK
+    Engine           WPD
+    Physical Name    d:\wpswrk\_TD9416
+
+                                        Members
+
+                                     Member
+      Number    Member Name          Type          File Size      Date Last Modified
+
+    --------------------------------------------------------------------------------
+
+           1    CLASSAGE_METADATA    DATA              16384      03OCT2025:14:01:42
+           2    FORMATS              CATALOG           28672      03OCT2025:13:48:21
+           3    PS_CLASSAGE          DATA               8192      03OCT2025:17:06:56
+           4    SASMACR              CATALOG           24576      03OCT2025:13:49:03
+    3330
+    3331      /*---
+    3332      Altair SLC
+    3333
+    3334      Obs    NAME        SEX         AGE
+    3335
+    3336       1     Alfred      M            14
+    3337       2     Alice       F            11
+    3338       3     Barbara     F            15
+    3339       4     Carol       F            17
+    3340       5     Henry       M            12
+    3341       6     James       M            18
+    3342      ---*/
+    3343
+    3344      /*--- FOR TESTING DELETE OUTPUT SAS DATASET IN CASE YOU RERUN ----*/
+    3345      proc datasets lib=work;
+    3346       delete ps_classage;
+    3347      run;quit;
+    NOTE: Deleting "WORK.PS_CLASSAGE" (memtype="DATA")
+    NOTE: Procedure datasets step took :
+          real time : 0.044
+          cpu time  : 0.000
+
+
+    3348
+    3349      /*--- SELECT YOUNGEST BY SEX USING PASSTHRU TO POSTGRESL ---*/
+    3350      proc sql;
+    3351         connect to postgresql (
+    3352            database="template1"
+    3353            server="localhost"
+    3354            port=5432
+    3355            user="postgres"
+    3356            password=XXXXXXXXXX
+    3357            preserve_tab_names=YES
+    3358         );
+    NOTE: Successfully connected to database POSTGRESQL as alias POSTGRESQL.
+    3359
+    3360         create table ps_classage as
+    3361         select * from connection to postgresql (
+    3362            select * from (
+    3363               select
+    3364                  row_number() over (partition by SEX order by AGE) as rank,
+    3365                  *
+    3366               from classage
+    3367            ) as ranked
+    3368            where rank = 1
+    3369         );
+    NOTE: Data set "WORK.ps_classage" has 2 observation(s) and 4 variable(s)
+    3370
+    3371         disconnect from postgresql;
+    NOTE: Successfully disconnected from database POSTGRESQL.
+    3372      quit;
+    NOTE: Procedure sql step took :
+          real time : 0.085
+          cpu time  : 0.046
+
+
+    3373
+    3374      proc print data=ps_classage;
+    3375      run;quit;
+    NOTE: 2 observations were read from "WORK.ps_classage"
+    NOTE: Procedure print step took :
+          real time : 0.019
+          cpu time  : 0.000
+
+
+    3376
+    3377      /*--- YOUNGEST BY SEX ---*/
+    3378
+    3379      /*---
+    3380      Altair SLC
+    3381
+    3382      Obs RANK    NAME   SEX  AGE
+    3383
+    3384       1     1    Alice  F     11  youngest
+    3385       2     1    Henry  M     12  youngest
+    3386      ---*/
+    3387      quit; run;
+    3388      ODS _ALL_ CLOSE;
+    3389      FILENAME WPSWBHTM CLEAR;
+
+    /*___                     _
+    |___ \   _ __   ___  __ _| |
+      __) | | `__| / __|/ _` | |
+     / __/  | |    \__ \ (_| | |
+    |_____| |_|    |___/\__, |_|
+                           |_|
+    */
+
+    %utlfkil(%sysfunc(pathname(WPSWBHTM))); /*-- disable precode --*/
+    &_init_;
+
+    options
+     validvarname=upcase;
+    libname wd1 wpd "d:/sd1";
+    data wd1.classage;
+      input
+        name$
+        sex$ age;
+    cards4;
+    Alfred  M 14
+    Alice   F 11
+    Barbara F 15
+    Carol   F 17
+    Henry   M 12
+    James   M 18
+    ;;;;
+    run;quit;
+
+    proc datasets lib=wd1
+     nolist nodetails;
+     delete want;
+    run;quit;
+
+    proc r;
+    export data=wd1.classage r=classage;
+    submit;
+    library(sqldf)
+    want<-sqldf('
+       select
+          *
+       from
+          (select *,row_number() over (partition by SEX order by AGE) as rnk from classage)
+       where
+          rnk==1
+       ')
+    want
+    endsubmit;
+    import data=want r=want;
+    run;quit;
+
+    proc print data=want;
+    run;quit;
+
+    /*---
+    Altair SLC
+
+    Obs    NAME     SEX    AGE    RNK
+
+     1     Alice     F      11     1
+     2     Henry     M      12     1
+    ---*/
+
+    /*
+    | | ___   __ _
+    | |/ _ \ / _` |
+    | | (_) | (_| |
+    |_|\___/ \__, |
+             |___/
+    */
+
+    985      ODS _ALL_ CLOSE;
+    3986      FILENAME WPSWBHTM TEMP;
+    NOTE: Writing HTML(WBHTML) BODY file d:\wpswrk\_TD9416\#LN00120
+    3987      ODS HTML(ID=WBHTML) BODY=WPSWBHTM GPATH="d:\wpswrk\_TD9416";
+    3988
+    3989      %utlfkil(%sysfunc(pathname(WPSWBHTM))); /*-- disable precode --*/
+    3990      &_init_;
+    3991
+    3992      options
+    3993       validvarname=upcase;
+    3994      libname wd1 wpd "d:/sd1";
+    NOTE: Library wd1 assigned as follows:
+          Engine:        WPD
+          Physical Name: d:\sd1
+
+    3995      data wd1.classage;
+    3996        input
+    3997          name$
+    3998          sex$ age;
+    3999      cards4;
+
+    NOTE: Data set "WD1.classage" has 6 observation(s) and 3 variable(s)
+    NOTE: The data step took :
+          real time : 0.005
+          cpu time  : 0.000
+
+
+    4000      Alfred  M 14
+    4001      Alice   F 11
+    4002      Barbara F 15
+    4003      Carol   F 17
+    4004      Henry   M 12
+    4005      James   M 18
+    4006      ;;;;
+    4007      run;quit;
+    4008
+    4009      proc datasets lib=wd1
+    4010       nolist nodetails;
+    4011       delete want;
+    4012      run;quit;
+    NOTE: WD1.WANT (memtype="DATA") was not found, and has not been deleted
+    NOTE: Procedure datasets step took :
+          real time : 0.000
+          cpu time  : 0.000
+
+
+    4013
+    4014      proc r;
+    NOTE: Using R version 4.5.1 (2025-06-13 ucrt) from d:\r451
+    4015      export data=wd1.classage r=classage;
+    NOTE: Creating R data frame 'classage' from data set 'WD1.classage'
+
+    4016      submit;
+    4017      library(sqldf)
+    4018      want<-sqldf('
+    4019         select
+    4020            *
+    4021         from
+    4022            (select *,row_number() over (partition by SEX order by AGE) as rnk from classage)
+    4023         where
+    4024            rnk==1
+    4025         ')
+    4026      want
+    4027      endsubmit;
+
+    NOTE: Submitting statements to R:
+
+    Loading required package: gsubfn
+    Loading required package: proto
+    Loading required package: RSQLite
+    > library(sqldf)
+    > want<-sqldf('
+    +    select
+    +       *
+    +    from
+    +       (select *,row_number() over (partition by SEX order by AGE) as rnk from classage)
+    +    where
+    +       rnk==1
+    +    ')
+
+    NOTE: Processing of R statements complete
+
+    > want
+    4028      import data=want r=want;
+    NOTE: Creating data set 'WORK.want' from R data frame 'want'
+    NOTE: Column names modified during import of 'want'
+    NOTE: Data set "WORK.want" has 2 observation(s) and 4 variable(s)
+
+    4029      run;quit;
+    NOTE: Procedure r step took :
+          real time : 1.249
+          cpu time  : 0.031
+
+
+    4030
+    4031      proc print data=want;
+    4032      run;quit;
+    NOTE: 2 observations were read from "WORK.want"
+    NOTE: Procedure print step took :
+          real time : 0.021
+          cpu time  : 0.015
+
+
+    4033
+    4034
+    4035      quit; run;
+    4036      ODS _ALL_ CLOSE;
+    4037      FILENAME WPSWBHTM CLEAR;
+
+    /*____               _   _                             _
+    |___ /   _ __  _   _| |_| |__   ___  _ __    ___  __ _| |
+      |_ \  | `_ \| | | | __| `_ \ / _ \| `_ \  / __|/ _` | |
+     ___) | | |_) | |_| | |_| | | | (_) | | | | \__ \ (_| | |
+    |____/  | .__/ \__, |\__|_| |_|\___/|_| |_| |___/\__, |_|
+            |_|    |___/                                |_|
+    */
+
+    %utlfkil(%sysfunc(pathname(WPSWBHTM))); /*-- disable precode --*/
+    &_init_;
+
+    options
+     validvarname=upcase;
+    libname sd1 sas7bdat "d:/sd1";
+    data sd1.classage;
+      input
+        name$
+        sex$ age;
+    cards4;
+    Alfred  M 14
+    Alice   F 11
+    Barbara F 15
+    Carol   F 17
+    Henry   M 12
+    James   M 18
+    ;;;;
+    run;quit;
+
+    proc datasets lib=wd1
+     nolist nodetails;
+     delete want;
+    run;quit;
+
+    options set=PYTHONHOME "D:\python310";
+    proc python;
+    submit;
+    import pyreadstat as ps
+    import pandas as pd
+    import pyreadr as pr
+    exec(open('c:/wpsoto/fn_pythonx.py').read());
+    classage,meta = ps.read_sas7bdat('d:/sd1/classage.sas7bdat')
+    pywant=pdsql('''
+       select
+          *
+       from
+          (select *,row_number() over (partition by SEX order by AGE) as rnk from classage)
+       where
+          rnk==1
+       ''')
+    print(pywant)
+    pr.write_rds('d:/rds/pywant.rds',pywant)
+    endsubmit;
+    ;quit;
+
+    /*---- CONVERT RDS FILE TO A SAS TABLE ----*/
+
+    options noerrorabend;
+    options set=RHOME "D:\d451";
+    %wps_py2sastable(
+       inp=d:/rds/pywant.rds
+      ,out=want );
+
+    proc print data=want;
+    run;quit;
+
+    /*---
+    PYTHON
+    Altair SLC
+
+       NAME SEX AGE rnk
+    1 Alice   F  11   1
+    2 Henry   M  12   1
+
+    Altair SLC
+
+    Obs    NAME     SEX    AGE    RNK
+
+     1     Alice     F      11     1
+     2     Henry     M      12     1
+    ---*/
+
+    /*
+    | | ___   __ _
+    | |/ _ \ / _` |
+    | | (_) | (_| |
+    |_|\___/ \__, |
+             |___/
+    */
+
+    4224      ODS _ALL_ CLOSE;
+    4225      FILENAME WPSWBHTM TEMP;
+    NOTE: Writing HTML(WBHTML) BODY file d:\wpswrk\_TD9416\#LN00130
+    4226      ODS HTML(ID=WBHTML) BODY=WPSWBHTM GPATH="d:\wpswrk\_TD9416";
+    4227
+    4228
+    4229      %utlfkil(%sysfunc(pathname(WPSWBHTM))); /*-- disable precode --*/
+    4230      &_init_;
+    4231
+    4232      options
+    4233       validvarname=upcase;
+    4234      libname sd1 sas7bdat "d:/sd1";
+    NOTE: Library sd1 assigned as follows:
+          Engine:        SAS7BDAT
+          Physical Name: d:\sd1
+
+    4235      data sd1.classage;
+    4236        input
+    4237          name$
+    4238          sex$ age;
+    4239      cards4;
+
+    NOTE: Data set "SD1.classage" has 6 observation(s) and 3 variable(s)
+    NOTE: The data step took :
+          real time : 0.012
+          cpu time  : 0.000
+
+
+    4240      Alfred  M 14
+    4241      Alice   F 11
+    4242      Barbara F 15
+    4243      Carol   F 17
+    4244      Henry   M 12
+    4245      James   M 18
+    4246      ;;;;
+    4247      run;quit;
+    4248
+    4249      proc datasets lib=wd1
+    4250       nolist nodetails;
+    4251       delete want;
+    4252      run;quit;
+    NOTE: WD1.WANT (memtype="DATA") was not found, and has not been deleted
+    NOTE: Procedure datasets step took :
+          real time : 0.000
+          cpu time  : 0.000
+
+
+    4253
+    4254      options set=PYTHONHOME "D:\python310";
+    4255      proc python;
+    4256      submit;
+    4257      import pyreadstat as ps
+    4258      import pandas as pd
+    4259      import pyreadr as pr
+    4260      exec(open('c:/wpsoto/fn_pythonx.py').read());
+    4261      classage,meta = ps.read_sas7bdat('d:/sd1/classage.sas7bdat')
+    4262      pywant=pdsql('''
+    4263         select
+    4264            *
+    4265         from
+    4266            (select *,row_number() over (partition by SEX order by AGE) as rnk from classage)
+    4267         where
+    4268            rnk==1
+    4269         ''')
+    4270      print(pywant)
+    4271      pr.write_rds('d:/rds/pywant.rds',pywant)
+    4272      endsubmit;
+
+    NOTE: Submitting statements to Python:
+
+    NOTE: <string>:16: SADeprecationWarning: The _ConnectionFairy.connection attribute is deprecated; please use 'driver_connection' (deprecated since: 2.0)
+
+
+    4273      ;quit;
+    NOTE: Procedure python step took :
+          real time : 1.486
+          cpu time  : 0.000
+
+
+    4274
+    4275      /*---- CONVERT RDS FILE TO A SAS TABLE ----*/
+    4276
+    4277      &_init_;
+    4278      options noerrorabend;
+    4279      options set=RHOME "D:\d451";
+    4280      %wps_py2sastable(
+    4281         inp=d:/rds/pywant.rds
+    4282        ,out=want );
+
+    NOTE: The infile 'c:\wpsoto\wps_py2rdataframe.sas' is:
+          Filename='c:\wpsoto\wps_py2rdataframe.sas',
+          Owner Name=T7610\Roger,
+          File size (bytes)=984,
+          Create Time=11:06:54 Sep 25 2025,
+          Last Accessed=17:53:59 Oct 03 2025,
+          Last Modified=14:12:29 Sep 25 2025,
+          Lrecl=32767, Recfm=V
+
+    NOTE: The file 'c:\wpsoto\wps_py2rdataframeout.sas' is:
+          Filename='c:\wpsoto\wps_py2rdataframeout.sas',
+          Owner Name=T7610\Roger,
+          File size (bytes)=0,
+          Create Time=11:28:51 Sep 25 2025,
+          Last Accessed=17:56:36 Oct 03 2025,
+          Last Modified=17:56:36 Oct 03 2025,
+          Lrecl=32767, Recfm=V
+
+    proc datasets lib=work
+      nolist nodetails;
+    delete want;
+    run;quit;
+    options set=RHOME "D:\d451";
+    proc r;
+    submit;
+    want <- readRDS("d:/rds/pywant.rds")
+    head(want)
+    endsubmit;
+    import data=want r=want;
+    ;quit;run;
+    NOTE: 12 records were read from file 'c:\wpsoto\wps_py2rdataframe.sas'
+          The minimum record length was 80
+          The maximum record length was 80
+    NOTE: 12 records were written to file 'c:\wpsoto\wps_py2rdataframeout.sas'
+          The minimum record length was 80
+          The maximum record length was 93
+    NOTE: The data step took :
+          real time : 0.002
+          cpu time  : 0.000
+
+
+    Start of %INCLUDE(level 1) c:/wpsoto/wps_py2rdataframeout.sas
+    4283    +  proc datasets lib=work
+    4284    +    nolist nodetails;
+    4285    +  delete want;
+    4286    +  run;quit;
+    NOTE: Deleting "WORK.WANT" (memtype="DATA")
+    NOTE: Procedure datasets step took :
+          real time : 0.000
+          cpu time  : 0.000
+
+
+    4287    +  options set=RHOME "D:\d451";
+    4288    +  proc r;
+    4289    +  submit;
+    4290    +  want <- readRDS("d:/rds/pywant.rds")
+    4291    +  head(want)
+    4292    +  endsubmit;
+    NOTE: Using R version 4.5.1 (2025-06-13 ucrt) from d:\r451
+
+    NOTE: Submitting statements to R:
+
+    > want <- readRDS("d:/rds/pywant.rds")
+
+    NOTE: Processing of R statements complete
+
+    > head(want)
+    4293    +  import data=want r=want;
+    NOTE: Creating data set 'WORK.want' from R data frame 'want'
+    NOTE: Column names modified during import of 'want'
+    NOTE: Data set "WORK.want" has 2 observation(s) and 4 variable(s)
+
+    4294    +  ;quit;run;
+    NOTE: Procedure r step took :
+          real time : 0.336
+          cpu time  : 0.000
+
+
+    ERROR: Data set "WORK.rwant" not found
+    NOTE: Procedure PRINT was not executed because of errors detected
+    NOTE: Procedure print step took :
+          real time : 0.000
+          cpu time  : 0.000
+
+
+    End of %INCLUDE(level 1) c:/wpsoto/wps_py2rdataframeout.sas
+    4295
+    4296      proc print data=want;
+    4297      run;quit;
+    NOTE: 2 observations were read from "WORK.want"
+    NOTE: Procedure print step took :
+          real time : 0.003
+          cpu time  : 0.000
+
+
+    4298
+    4299      quit; run;
+    4300      ODS _ALL_ CLOSE;
+    4301      FILENAME WPSWBHTM CLEAR;
+
+    /*              _
+      ___ _ __   __| |
+     / _ \ `_ \ / _` |
+    |  __/ | | | (_| |
+     \___|_| |_|\__,_|
+
+    */
